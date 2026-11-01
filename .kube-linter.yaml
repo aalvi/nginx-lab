@@ -1,0 +1,4 @@
+checks:
+  exclude:
+    # The lab cluster has a single node, so anti-affinity cannot help.
+    - no-anti-affinity

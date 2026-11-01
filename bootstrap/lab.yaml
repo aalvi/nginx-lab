@@ -1,0 +1,19 @@
+# Ubuntu VM that hosts the lab. Start with: limactl start --name=lab bootstrap/lab.yaml
+# Stay on Ubuntu 24.04 (kernel 6.8): vz on an Intel Mac needs macOS 15.5+ for Linux 6.12+.
+base: template:ubuntu-24.04
+vmType: vz
+cpus: 4
+memory: 8GiB
+disk: 40GiB
+# Manifests come from GitHub through Argo CD, so the VM needs no access to Mac files.
+mounts: []
+# k3s brings its own containerd.
+containerd:
+  system: false
+  user: false
+portForwards:
+  # NGINX Ingress Controller NodePorts
+  - guestPort: 30080
+    hostPort: 8080
+  - guestPort: 30443
+    hostPort: 8443

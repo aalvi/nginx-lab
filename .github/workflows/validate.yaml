@@ -1,0 +1,38 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  KUBECONFORM_VERSION: v0.8.0
+  KUBE_LINTER_VERSION: v0.8.3
+  CRD_SCHEMAS: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+
+      - name: Install tools
+        run: |
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/$KUBECONFORM_VERSION/kubeconform-linux-amd64.tar.gz" | sudo tar xz -C /usr/local/bin kubeconform
+          sudo curl -fsSL "https://github.com/stackrox/kube-linter/releases/download/$KUBE_LINTER_VERSION/kube-linter-linux" -o /usr/local/bin/kube-linter
+          sudo chmod +x /usr/local/bin/kube-linter
+
+      - name: Check manifest schemas
+        run: kubeconform -strict -summary -schema-location default -schema-location "$CRD_SCHEMAS" apps argocd
+
+      - name: Lint workloads
+        run: kube-linter lint --config .kube-linter.yaml apps
+
+      - name: Render the controller chart with the values in Git
+        run: |
+          app=argocd/apps/nginx-ingress.yaml
+          yq '.spec.source.helm.valuesObject' "$app" > values.yaml
+          helm template nginx-ingress "oci://$(yq '.spec.source.repoURL' "$app")/$(yq '.spec.source.chart' "$app")" \
+            --version "$(yq '.spec.source.targetRevision' "$app")" --namespace nginx-ingress -f values.yaml \
+            | kubeconform -summary -ignore-missing-schemas
