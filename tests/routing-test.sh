@@ -11,8 +11,8 @@ check() { # name, host, expected body substring
   if grep -q "$3" <<<"$body"; then echo "PASS $1"; else echo "FAIL $1: got: $body"; fail=1; fi
 }
 
-check "app1.localhost -> app1" app1.localhost "Hostname: app1-"
-check "app2.localhost -> app2" app2.localhost "hello from app2"
+check "app1.localhost -> app1" app1.localhost "Hostname: app1---"
+check "app2.localhost -> app2" app2.localhost "hello from app2---"
 
 code=$(curl -s --max-time 5 -o /dev/null -w '%{http_code}' -H "Host: nope.localhost" "$URL")
 if [ "$code" = 404 ]; then echo "PASS unknown host -> 404"; else echo "FAIL unknown host: got $code"; fail=1; fi
