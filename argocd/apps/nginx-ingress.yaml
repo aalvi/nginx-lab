@@ -17,6 +17,11 @@ spec:
       valuesObject:
         controller:
           replicaCount: 1
+          config:
+            entries:
+              # NodePort has no load balancer address. Reporting the node IP lets the
+              # Ingress publish an address, which Argo CD needs to mark it Healthy.
+              external-status-address: 192.168.5.15
           ingressClass:
             name: nginx
             setAsDefaultIngress: true
