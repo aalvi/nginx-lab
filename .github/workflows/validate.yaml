@@ -24,15 +24,17 @@ jobs:
           sudo chmod +x /usr/local/bin/kube-linter
 
       - name: Check manifest schemas
-        run: kubeconform -strict -summary -schema-location default -schema-location "$CRD_SCHEMAS" apps argocd
+        run: kubeconform -strict -summary -schema-location default -schema-location "$CRD_SCHEMAS" apps gateway-apps argocd
 
       - name: Lint workloads
-        run: kube-linter lint --config .kube-linter.yaml apps
+        run: kube-linter lint --config .kube-linter.yaml apps gateway-apps
 
-      - name: Render the controller chart with the values in Git
+      - name: Render the controller charts with the values in Git
         run: |
-          app=argocd/apps/nginx-ingress.yaml
-          yq '.spec.source.helm.valuesObject' "$app" > values.yaml
-          helm template nginx-ingress "oci://$(yq '.spec.source.repoURL' "$app")/$(yq '.spec.source.chart' "$app")" \
-            --version "$(yq '.spec.source.targetRevision' "$app")" --namespace nginx-ingress -f values.yaml \
-            | kubeconform -summary -ignore-missing-schemas
+          for name in nginx-ingress nginx-gateway-fabric; do
+            app="argocd/apps/$name.yaml"
+            yq '.spec.source.helm.valuesObject' "$app" > values.yaml
+            helm template "$name" "oci://$(yq '.spec.source.repoURL' "$app")/$(yq '.spec.source.chart' "$app")" \
+              --version "$(yq '.spec.source.targetRevision' "$app")" --namespace "$name" -f values.yaml \
+              | kubeconform -summary -ignore-missing-schemas
+          done

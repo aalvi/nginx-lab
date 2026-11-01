@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app4
+  namespace: gateway-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: app4 }
+  template:
+    metadata:
+      labels: { app: app4 }
+    spec:
+      containers:
+        - name: echo
+          image: hashicorp/http-echo:1.0
+          args: ["-listen=:5678", "-text=hello from app4"]
+          ports:
+            - containerPort: 5678
+          readinessProbe:
+            httpGet: { path: /health, port: 5678 }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests: { cpu: 10m, memory: 16Mi }
+            limits: { cpu: 100m, memory: 32Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app4
+  namespace: gateway-lab
+spec:
+  selector: { app: app4 }
+  ports:
+    - port: 80
+      targetPort: 5678
