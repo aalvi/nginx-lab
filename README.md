@@ -1,6 +1,6 @@
 # nginx-lab
 
-A local Kubernetes lab deployed by GitOps. The NGINX Ingress Controller routes traffic to two sample apps, and Argo CD deploys everything from this repo.
+A local Kubernetes lab deployed by GitOps. The NGINX Ingress Controller routes traffic to two sample apps, NGINX Gateway Fabric routes traffic to two more, and Argo CD deploys everything from this repo.
 
 ```text
 Mac:        VS Code + git  --push-->  GitHub (PR checks run in GitHub Actions)
@@ -8,8 +8,10 @@ Mac:        VS Code + git  --push-->  GitHub (PR checks run in GitHub Actions)
 Ubuntu VM:  k3s + Argo CD  <--pull------+
                  |
                  +--> NGINX Ingress Controller --> app1, app2
+                 +--> NGINX Gateway Fabric ------> app3, app4
 
 Mac browser: http://app1.localhost:8080, http://app2.localhost:8080
+             http://app3.localhost:8082, http://app4.localhost:8082
 ```
 
 ## Requirements
@@ -30,7 +32,7 @@ bootstrap/down.sh            # deletes the VM
 
 ## Making a change
 
-1. Create a branch and edit a manifest in `apps/` or `argocd/apps/`.
+1. Create a branch and edit a manifest in `apps/`, `gateway-apps/` or `argocd/apps/`.
 2. Open a pull request. The `validate` check must pass.
 3. Merge. Argo CD syncs within about 3 minutes.
 4. To roll back, revert the commit.
@@ -54,8 +56,9 @@ Then open https://localhost:8081 and sign in as `admin`. The certificate is self
 |---|---|
 | `bootstrap/` | The only parts run by hand |
 | `argocd/root-app.yaml` | App of apps, points Argo CD at `argocd/apps` |
-| `argocd/apps/` | Controller chart and sample apps as Argo CD applications |
-| `apps/` | Sample app and Ingress manifests |
+| `argocd/apps/` | Controller charts, Gateway API CRDs and sample apps as Argo CD applications |
+| `apps/` | app1 and app2 with their Ingress, routed by the NGINX Ingress Controller |
+| `gateway-apps/` | app3 and app4 with their Gateway and HTTPRoutes, routed by NGINX Gateway Fabric |
 | `tests/` | Routing test, run from the Mac |
 | `.github/workflows/` | Pull request checks |
 
