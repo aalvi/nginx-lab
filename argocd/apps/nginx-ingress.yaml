@@ -22,6 +22,10 @@ spec:
             setAsDefaultIngress: true
           service:
             type: NodePort
+            # NodePort has no load balancer address. Reporting the node IP lets the
+            # Ingress publish an address, which Argo CD needs to mark it Healthy.
+            externalIPs:
+              - 192.168.5.15
             httpPort:
               nodePort: 30080
             httpsPort:
